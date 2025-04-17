@@ -44,6 +44,22 @@ const Navbar = () => {
         <Button color="inherit">
           <Link href="/facilities">Fasilitas</Link>
         </Button>
+        {session ? (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Avatar
+              src={session.user.image}
+              alt="Profile"
+              sx={{ width: 40, height: 40 }}
+            />
+            <Button color="inherit" onClick={() => signOut()}>
+              Logout
+            </Button>
+          </Box>
+        ) : (
+          <Button color="inherit" onClick={() => signIn("google")}>
+            Login
+          </Button>
+        )}
       </Toolbar>
     </AppBar>
   );
