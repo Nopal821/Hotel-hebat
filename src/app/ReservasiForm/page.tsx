@@ -29,8 +29,13 @@ const ReservasiForm: React.FC<ReservasiFormProps> = ({ userId, roomId }) => {
   }, [session]);
 
   const handleSubmit = async () => {
+    if (!session) {
+      alert("Anda belum login.");
+      return;
+    }
+  
     const csrfToken = Cookies.get('XSRF-TOKEN');
-
+  
     try {
       const response = await fetch('http://localhost:8000/api/reservasi', {
         method: 'POST',
@@ -38,6 +43,7 @@ const ReservasiForm: React.FC<ReservasiFormProps> = ({ userId, roomId }) => {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'X-XSRF-TOKEN': csrfToken ?? '',
+          'Authorization': `Bearer ${session.accessToken}`, // <-- penting
         },
         body: JSON.stringify({
           user_id: userId,
@@ -49,7 +55,7 @@ const ReservasiForm: React.FC<ReservasiFormProps> = ({ userId, roomId }) => {
           catatan: catatan,
         }),
       });
-
+  
       const result = await response.json();
       if (response.ok) {
         alert('Reservasi berhasil!');
@@ -61,7 +67,7 @@ const ReservasiForm: React.FC<ReservasiFormProps> = ({ userId, roomId }) => {
       alert('Terjadi kesalahan saat mengirim data');
     }
   };
-
+  
   return (
     <Box sx={{ maxWidth: 500, mx: 'auto', mt: 4 }}>
       <Typography variant="h5" mb={2}>Form Reservasi</Typography>

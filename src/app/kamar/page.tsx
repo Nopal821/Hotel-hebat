@@ -28,6 +28,8 @@ import {
 import { Brightness4, Brightness7 } from "@mui/icons-material";
 import { fetchRooms } from "@/utils/api";
 import ReservasiButton from "@/components/ReservasiButton";
+import {Menu, MenuItem} from '@mui/material';
+
 
 interface Room {
   id: number;
@@ -96,6 +98,7 @@ export default function Rooms() {
     return new Date(dateString).toLocaleDateString("id-ID", opts);
   };
 
+
   const handleSearchRooms = async () => {
     const today = new Date().toISOString().split("T")[0];
     if (!checkIn || !checkOut) {
@@ -123,15 +126,35 @@ export default function Rooms() {
     }
   };
 
+
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+const open = Boolean(anchorEl);
+
+const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+  setAnchorEl(event.currentTarget);
+};
+
+const handleMenuClose = () => {
+  setAnchorEl(null);
+};
+
+const handleLogout = () => {
+  handleMenuClose();
+  signOut();
+};
+
+
   return (
     <>
       <CssBaseline />
       <div
-        style={{
-          backgroundColor: darkMode ? "#121212" : "#f8f8f8",
+         style={{
+          background: darkMode
+            ? "linear-gradient(135deg, #121212, #1a1a1a)"
+            : "linear-gradient(135deg, #f8f8f8, #ffffff)",
           minHeight: "100vh",
           color: darkMode ? "#e0e0e0" : "#222",
-          transition: "background-color 0.3s ease-in-out",
+          transition: "all 0.3s ease-in-out",
         }}
       >
         {/* Navbar */}
@@ -165,13 +188,44 @@ export default function Rooms() {
             >
               Hotel Hebat
             </Typography>
-            <Button sx={{ color: darkMode ? "#E0E0E0" : "#333333" }}>
-              <Link href="/">Home</Link>
-            </Button>
-            <Button sx={{ color: darkMode ? "#E0E0E0" : "#333333" }}>
+            <Button
+  sx={{
+    color: darkMode ? "#E0E0E0" : "#333333",
+    transition: "all 0.3s",
+    "&:hover": {
+      color: "#3d74f3",
+      textShadow: "0 0 10px rgba(61,116,243,0.7)",
+      transform: "scale(1.05)",
+    },
+  }}
+>
+  <Link href="/">Home</Link>
+</Button>
+
+<Button
+  sx={{
+    color: darkMode ? "#E0E0E0" : "#333333",
+    transition: "all 0.3s",
+    "&:hover": {
+      color: "#3d74f3",
+      textShadow: "0 0 10px rgba(61,116,243,0.7)",
+      transform: "scale(1.05)",
+    },
+  }}
+>
               <Link href="/rooms">Kamar</Link>
             </Button>
-            <Button sx={{ color: darkMode ? "#E0E0E0" : "#333333" }}>
+            <Button
+  sx={{
+    color: darkMode ? "#E0E0E0" : "#333333",
+    transition: "all 0.3s",
+    "&:hover": {
+      color: "#3d74f3",
+      textShadow: "0 0 10px rgba(61,116,243,0.7)",
+      transform: "scale(1.05)",
+    },
+  }}
+>
               <Link href="/facilities">Fasilitas</Link>
             </Button>
             {session ? (
@@ -183,21 +237,54 @@ export default function Rooms() {
                   gap: 2,
                 }}
               >
-                <Avatar
-                  src={session.user.image}
-                  alt="Profile"
-                  sx={{ width: 40, height: 40 }}
-                />
-                <Button color="inherit" onClick={() => signOut()}>
-                  Logout
-                </Button>
+               <IconButton onClick={handleMenuOpen} sx={{ p: 0 }}>
+  <Avatar
+    src={session.user.image}
+    alt={session.user.name || "Profile"}
+    sx={{ width: 40, height: 40 }}
+  />
+</IconButton>
+<Menu 
+  anchorEl={anchorEl}
+  open={open}
+  onClose={handleMenuClose}
+  anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+  transformOrigin={{ vertical: "top", horizontal: "right" }}
+  slotProps={{
+    paper: {
+      sx: {
+        color: darkMode ? "#fff" : "#000",
+        backgroundColor: darkMode ? "#333" : "#fff", // <- ini buat ubah warna background box-nya
+        borderRadius: "8px",
+        boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)", // opsional biar smooth
+      }
+    }
+  }}
+>
+  <MenuItem sx={{
+                  color: darkMode ? "#E0E0E0" : "#333333",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                }}
+  onClick={handleLogout}>Logout</MenuItem>
+</Menu>
+
               </Box>
             ) : (
               <Button
-                sx={{ color: darkMode ? "#E0E0E0" : "#333333" }}
-                color="inherit"
-                onClick={() => signIn("google")}
-              >
+  sx={{
+    color: darkMode ? "#E0E0E0" : "#333333",
+    transition: "all 0.3s",
+    "&:hover": {
+      color: "#3d74f3",
+      textShadow: "0 0 10px rgba(61,116,243,0.7)",
+      transform: "scale(1.05)",
+    },
+  }}
+  color="inherit"
+  onClick={() => signIn("google")}
+>
                 Login
               </Button>
             )}
@@ -325,12 +412,12 @@ export default function Rooms() {
                   backgroundColor: darkMode ? "#c4c4c4" : "#fff",
                   color: darkMode ? "#fff" : "#333",
                   borderRadius: "8px",
+                  mb: "5px",
                 }}
               />
               <Typography
                 variant="body2"
                 sx={{
-                  marginTop: "5px",
                   color: darkMode ? "#E0E0E0" : "#333",
                 }}
               >
@@ -349,8 +436,17 @@ export default function Rooms() {
                   backgroundColor: darkMode ? "#c4c4c4" : "#fff",
                   color: darkMode ? "#fff" : "#333",
                   borderRadius: "8px",
+                  mb: "5px",
                 }}
               />
+                 <Typography
+                variant="body2"
+                sx={{
+                  color: darkMode ? "#E0E0E0" : "#333",
+                }}
+              >
+                {formatDate(checkOut)}
+              </Typography>
             </Grid>
             <Grid item xs={12}>
               <Button
@@ -409,11 +505,17 @@ export default function Rooms() {
                     </Typography>
 
                     {/* Tombol Reservasi */}
-                    <ReservasiButton
-                      roomId={room.id}
-                      checkIn={checkIn}
-                      checkOut={checkOut}
-                    />
+                    {session ? (
+  <ReservasiButton
+    roomId={room.id}
+    checkIn={checkIn}
+    checkOut={checkOut}
+  />
+) : (
+  <Typography color="error" sx={{ mt: 1 }}>
+    Login terlebih dahulu untuk melakukan reservasi.
+  </Typography>
+)}
                   </CardContent>
                 </Card>
               </Grid>

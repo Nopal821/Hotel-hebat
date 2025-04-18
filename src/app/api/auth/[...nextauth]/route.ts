@@ -34,9 +34,10 @@ const handler = NextAuth({
   callbacks: {
     async jwt({ token, user, account }) {
       if (user) {
-        token.id = user.id;
+        token.id = Number(user.id);
         token.name = user.name;
         token.email = user.email;
+        token.image = user.image ?? null;
         token.accessToken = user.accessToken;
   
         // Simpan user ke DB hanya jika login dari Google
@@ -64,7 +65,9 @@ const handler = NextAuth({
           id: token.id,
           name: token.name,
           email: token.email,
+          image: token.image ?? null,
         },
+        
         accessToken: token.accessToken,
       };
     },
