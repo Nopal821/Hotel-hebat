@@ -1,77 +1,58 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import CredentialsProvider from "next-auth/providers/credentials";
 
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        const res = await fetch("http://localhost:8000/api/auth/login", {
+      profile: async (googleProfile) => {
+        // send name/email to your Laravel endpoint
+        const res = await fetch("http://localhost:8000/api/auth/google-callback", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            email: credentials?.email,
-            password: credentials?.password,
+            name:     googleProfile.name,
+            email:    googleProfile.email,
+            provider: "google",
           }),
         });
-
-        const response = await res.json();
-        if (!res.ok) throw new Error(response.message || "Login failed");
-
-        return { ...response.user, accessToken: response.token };
+        const { user } = await res.json();
+        // return the shape NextAuth expects
+        return {
+          id:    String(user.id),      // <-- your Laravel DB ID
+          name:  user.name,
+          email: user.email,
+          image: user.image || null,
+        };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       if (user) {
-        token.id = Number(user.id);
-        token.name = user.name;
-        token.email = user.email;
-        token.image = user.image ?? null;
-        token.accessToken = user.accessToken;
-  
-        // Simpan user ke DB hanya jika login dari Google
-        if (account?.provider === "google") {
-          await fetch("http://localhost:8000/api/auth/google-callback", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              name: user.name,
-              email: user.email,
-              provider: "google",
-            }),
-          });
-        }
+        // on initial sign‐in we get the `user` from GoogleProvider.profile
+        token.id      = user.id;
+        token.email   = user.email;
+        token.name    = user.name;
+        token.picture = user.image as string | null;
       }
       return token;
     },
-  
     async session({ session, token }) {
-      return {
-        ...session,
-        user: {
-          id: token.id,
-          name: token.name,
-          email: token.email,
-          image: token.image ?? null,
-        },
-        
-        accessToken: token.accessToken,
-      };
+      // expose the DB ID in session.user.id
+      session.user.id    = token.id as string;
+      session.user.name  = token.name  as string;
+      session.user.email = token.email as string;
+      session.user.image = token.picture as string | null;
+      return session;
     },
   },
-});  
+  pages: {
+    signIn: "/login",
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+};
 
+const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

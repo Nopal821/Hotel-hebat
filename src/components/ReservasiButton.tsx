@@ -1,7 +1,7 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import { useState } from "react";
-import Cookies from "js-cookie";
 import {
   Button,
   Modal,
@@ -23,53 +23,48 @@ const style = {
 };
 
 interface ReservasiButtonProps {
-    roomId: number;
-    checkIn: string;
-    checkOut: string;
-  }
-  
-  export default function ReservasiButton({
-    roomId,
-    checkIn: initialCheckIn,
-    checkOut: initialCheckOut,
-  }: ReservasiButtonProps) {
-    const [open, setOpen] = useState(false);
-    const [checkIn, setCheckIn] = useState(initialCheckIn);
-    const [checkOut, setCheckOut] = useState(initialCheckOut);  
-    const [jumlahTamu, setJumlahTamu] = useState(1);
-    const [catatan, setCatatan] = useState("");
+  roomId: number;
+  checkIn: string;
+  checkOut: string;
+}
 
-
-    const checkLogin = () => {
-        const token = Cookies.get("token"); // atau nama cookie sesuai dengan autentikasi kamu
-        if (!token) {
-          alert("Anda harus login untuk mengakses halaman ini.");
-          return false;
-        }
-        return true;
-      };
+export default function ReservasiButton({
+  roomId,
+  checkIn: initialCheckIn,
+  checkOut: initialCheckOut,
+}: ReservasiButtonProps) {
+  const { data: session } = useSession();
+  const [open, setOpen] = useState(false);
+  const [checkIn, setCheckIn] = useState(initialCheckIn);
+  const [checkOut, setCheckOut] = useState(initialCheckOut);
+  const [jumlahTamu, setJumlahTamu] = useState(1);
+  const [catatan, setCatatan] = useState("");
 
   const handleOpen = () => {
-    setCheckIn(initialCheckIn); // isi ulang dari props
+    setCheckIn(initialCheckIn);
     setCheckOut(initialCheckOut);
     setOpen(true);
   };
-  
   const handleClose = () => setOpen(false);
 
   const handleReservasi = async () => {
-    const csrfToken = Cookies.get("XSRF-TOKEN") || "";
+    // guard against null session
+    if (!session?.user?.id) {
+      alert("Silakan login terlebih dahulu.");
+      return;
+    }
+
+    // now TypeScript knows session.user.id exists
+    const userId = Number(session.user.id);
 
     try {
       const response = await fetch("http://localhost:8000/api/reservasi", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Accept: "application/json",
-          "X-XSRF-TOKEN": csrfToken,
         },
         body: JSON.stringify({
-          user_id: 1, // nanti ganti pakai session.user.id
+          user_id: userId,
           room_id: roomId,
           check_in: checkIn,
           check_out: checkOut,
@@ -78,11 +73,13 @@ interface ReservasiButtonProps {
           catatan,
         }),
       });
+      const data = await response.json();
       if (response.ok) {
         alert("Reservasi berhasil!");
         handleClose();
       } else {
-        alert("Reservasi gagal. Coba lagi.");
+        console.error(data);
+        alert(`Gagal: ${data.message || JSON.stringify(data.errors)}`);
       }
     } catch (err) {
       console.error(err);
@@ -94,10 +91,10 @@ interface ReservasiButtonProps {
     <>
       <Button
         variant="contained"
-        color="primary"
         fullWidth
-        sx={{ mt: 2 }}
         onClick={handleOpen}
+        disabled={!session?.user?.id}    // disable if not logged in
+        sx={{ mt: 2 }}
       >
         Reservasi Sekarang
       </Button>
@@ -135,19 +132,17 @@ interface ReservasiButtonProps {
           />
           <TextField
             label="Catatan"
-            fullWidth
             multiline
             rows={3}
+            fullWidth
             margin="normal"
             value={catatan}
             onChange={(e) => setCatatan(e.target.value)}
           />
-
           <Button
             variant="contained"
-            color="primary"
-            onClick={handleReservasi}
             fullWidth
+            onClick={handleReservasi}
             sx={{ mt: 2 }}
           >
             Kirim Reservasi

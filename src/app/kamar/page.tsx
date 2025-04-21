@@ -261,6 +261,20 @@ const handleLogout = () => {
     }
   }}
 >
+<MenuItem
+    sx={{
+      color: darkMode ? "#E0E0E0" : "#333333",
+      display: "flex",
+      alignItems: "center",
+      gap: 2,
+    }}
+    component={Link}
+    href="/my-reservations"
+    onClick={handleMenuClose} // biar menu ketutup saat klik link
+  >
+    Reservasi Saya
+  </MenuItem>
+  
   <MenuItem sx={{
                   color: darkMode ? "#E0E0E0" : "#333333",
                   display: "flex",
